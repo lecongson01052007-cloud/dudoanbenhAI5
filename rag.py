@@ -53,4 +53,44 @@ print("\nĐang tải mô hình embedding sentence-transformers...")
 embedding_model = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
-print("Đã tải xong mô hình Embedding thành công! Sẵn sàng bàn giao dữ liệu cho Thành viên 5 đưa vào ChromaDB.")
+print("Đã tải xong mô hình Embedding thành công! ")
+from langchain_community.vectorstores import Chroma
+
+# ==========================================
+# 3. CẤU HÌNH VÀ LƯU TRỮ VÀO CHROMADB (LOCAL)
+# ==========================================
+print("\nĐang khởi tạo và lưu trữ vector vào ChromaDB...")
+
+# Lưu toàn bộ các chunks đã được nhúng vector vào Vector Database ChromaDB chạy local
+vectorstore = Chroma.from_documents(
+    documents=all_splits,         # Danh sách các đoạn văn bản kèm metadata (chuyên ngành, tên file)
+    embedding=embedding_model,    # Mô hình embedding đã tải ở bước trước
+    persist_directory="./chroma_db" # Thư mục lưu trữ cơ sở dữ liệu trên ổ cứng
+)
+
+print("🎉 Lưu trữ thành công vào ChromaDB tại thư mục './chroma_db'!")
+
+# ==========================================
+# 4. TEST THỬ CƠ CHẾ TRUY XUẤT (RETRIEVAL TEST)
+# ==========================================
+print("\n--- ĐANG KIỂM THỬ CƠ CHẾ TRUY XUẤT (RETRIEVAL) ---")
+
+# Tạo bộ truy xuất (Retriever) từ ChromaDB, yêu cầu lấy ra 3 đoạn văn bản liên quan nhất
+retriever = vectorstore.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 3}
+)
+
+# Thử đặt câu hỏi/triệu chứng giả lập của bác sĩ để kiểm tra kết quả tìm kiếm
+test_query = "Triệu chứng và phác đồ điều trị bệnh tăng huyết áp hoặc đái tháo đường"
+print(gr:=f"🔍 Câu hỏi test: '{test_query}'\n")
+
+# Thực hiện truy xuất
+relevant_docs = retriever.invoke(test_query)
+
+# Hiển thị kết quả các đoạn văn bản tìm được
+for i, doc in enumerate(relevant_docs, 1):
+    print(f"--- KẾT QUẢ TRUY XUẤT {i} ---")
+    print(f"Chuyên ngành: {doc.metadata.get('chuyen_nganh')}")
+    print(f"Nguồn file: {doc.metadata.get('ten_file')}")
+    print(f"Nội dung: {doc.page_content[:300]}...\n") # Hiển thị 300 ký tự đầu tiên của đoạn
