@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.py[cod]
+.venv/
+vector_db/
+backend*.log
+streamlit*.log
+.streamlit/secrets.toml
+*.xlsx
+!evaluation/template_cases.xlsx
+data/clinician_feedback.jsonl
